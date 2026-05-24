@@ -38,6 +38,7 @@
             justify-content: center;
             opacity: 1;
             transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            pointer-events: none; /* Evita que bloquee toques mientras se desvanece */
         }
 
         .splash-logo {
@@ -427,13 +428,21 @@
     const cGalaxy = document.getElementById("count-galaxy");
     const storageKey = "scan_galaxy_v3";
 
+    // Manejo ultra seguro del Splash optimizado para Web To App / WebViews discretos
     function manejarSplash() {
         const splash = document.getElementById('splash-screen');
+        if (!splash) return;
         
+        // Ejecución directa basada en tiempo fijo en lugar de esperar descargas de red externas
         setTimeout(() => {
             splash.style.opacity = '0';
+            
+            // Forzar desaparición inmediata en el renderizado mediante display none (100% compatible)
             setTimeout(() => {
-                splash.remove();
+                splash.style.display = 'none';
+                if (splash.parentNode) {
+                    splash.parentNode.removeChild(splash); // Eliminación limpia en ecosistemas Android/iOS viejos
+                }
             }, 600);
         }, 2500);
     }
@@ -506,10 +515,16 @@
         }, 350);
     }
 
-    window.onload = function() {
+    // Inicializador blindado para asegurar ejecución instantánea en Apps
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function() {
+            inicializarContadores();
+            manejarSplash();
+        });
+    } else {
         inicializarContadores();
         manejarSplash();
-    };
+    }
 </script>
 
 </body>
