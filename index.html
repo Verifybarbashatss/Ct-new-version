@@ -22,23 +22,43 @@
             color: #000;
         }
 
-        /* ========================================================
-           PANTALLA DE CARGA INICIAL (SPLASH SCREEN) OPTIMIZADA
-           ======================================================== */
-        #splash-screen {
-            position: fixed;
+        /* Contenedor principal */
+        #main-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100dvh;
+        }
+
+        /* Estructura base de TODAS las pantallas (incluyendo el Splash) */
+        .container {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100dvh;
-            background: #000000;
-            z-index: 9999;
-            display: flex;
+            display: none; /* Ocultas por defecto */
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; 
+            padding: calc(3vh + env(safe-area-inset-top)) 20px calc(2vh + env(safe-area-inset-bottom)) 20px;
+            overflow: hidden; 
+            background: #ffffff;
+        }
+
+        /* Mostrar pantalla activa (Mismo sistema para todo) */
+        .container.active {
+            display: flex;
+        }
+
+        /* ========================================================
+           PANTALLA NEGRA (SPLASH) COMO UNA PANTALLA MÁS
+           ======================================================== */
+        #screen-splash {
+            background: #000000;
+            justify-content: center; /* Centra el logo perfectamente */
+            z-index: 9999;
             opacity: 1;
             transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            pointer-events: none; /* Evita que bloquee toques mientras se desvanece */
         }
 
         .splash-logo {
@@ -46,91 +66,37 @@
             max-width: 220px;
             height: auto;
             opacity: 0;
-            /* Animación combinada: desvanecido + palpitación única */
+            /* Animación de palpitación única */
             animation: splashAnim 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.2s;
         }
 
         @keyframes splashAnim {
-            0% {
-                opacity: 0;
-                transform: scale(0.85);
-            }
-            35% {
-                opacity: 1;
-                transform: scale(1.08); /* Crece (Palpitación) */
-            }
-            65% {
-                transform: scale(0.95); /* Contracción intermedia */
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1); /* Tamaño final estable */
-            }
+            0% { opacity: 0; transform: scale(0.85); }
+            35% { opacity: 1; transform: scale(1.08); }
+            65% { transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
-        /* Contenedor principal visible por defecto tras remover la carga */
-        #main-wrapper {
-            position: relative;
-            width: 100vw;
-            height: 100dvh;
-            visibility: visible;
-        }
-
-        /* Estructura base de los contenedores */
-        .container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100dvh;
-            display: none; 
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between; 
-            padding: calc(3vh + env(safe-area-inset-top)) 20px calc(2vh + env(safe-area-inset-bottom)) 20px;
-            overflow: hidden; 
-            background: #ffffff;
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        /* Mostrar pantalla activa */
-        .container.active {
-            display: flex;
-        }
-
-        /* Doble animación: Desplazamiento izquierdo + Desvanecido (0.8s) al entrar */
+        /* Animación: Desplazamiento izquierdo + Desvanecido (0.8s) al entrar a la gorra */
         .slide-fade-in {
             display: flex !important;
             animation: slideFadeInKey 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        /* Animación de retorno/salida hacia la derecha */
+        /* Animación de retorno hacia la derecha */
         .slide-out-right {
             display: flex !important;
             animation: slideOutRightKey 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         @keyframes slideFadeInKey {
-            from {
-                transform: translateX(100vw);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100vw); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         @keyframes slideOutRightKey {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100vw);
-                opacity: 0;
-            }
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100vw); opacity: 0; }
         }
 
         .header-section {
@@ -361,12 +327,12 @@
 </head>
 <body>
 
-<div id="splash-screen">
-    <img src="logoo.png" class="splash-logo" alt="Logo">
-</div>
-
 <div id="main-wrapper">
-    <div class="container active" id="screen-1">
+    <div class="container active" id="screen-splash">
+        <img src="logoo.png" class="splash-logo" alt="Logo">
+    </div>
+
+    <div class="container" id="screen-1">
         <div class="header-section">
             <h1 class="home-title">VERIFY HAT</h1>
             <p class="home-instruction">TAP YOUR PHONE NEXT TO THE HAT TAG TO<br>AUTHENTICATE YOUR BARBAS PRODUCT</p>
@@ -428,23 +394,22 @@
     const cGalaxy = document.getElementById("count-galaxy");
     const storageKey = "scan_galaxy_v3";
 
-    // Manejo ultra seguro del Splash optimizado para Web To App / WebViews discretos
-    function manejarSplash() {
-        const splash = document.getElementById('splash-screen');
-        if (!splash) return;
-        
-        // Ejecución directa basada en tiempo fijo en lugar de esperar descargas de red externas
+    // Transición nativa idéntica al cambio de página para quitar la pantalla negra
+    function manejarSplashYEntrar() {
+        const splash = document.getElementById('screen-splash');
+        const home = document.getElementById('screen-1');
+
         setTimeout(() => {
+            // Desvanecemos la pantalla negra simulando salida
             splash.style.opacity = '0';
             
-            // Forzar desaparición inmediata en el renderizado mediante display none (100% compatible)
+            // Activamos la pantalla de inicio al mismo tiempo
+            home.classList.add('active');
+
             setTimeout(() => {
-                splash.style.display = 'none';
-                if (splash.parentNode) {
-                    splash.parentNode.removeChild(splash); // Eliminación limpia en ecosistemas Android/iOS viejos
-                }
+                splash.classList.remove('active'); // La apaga por completo usando display: none
             }, 600);
-        }, 2500);
+        }, 2500); // 2.5 segundos totales de animación de logo
     }
 
     function inicializarContadores() {
@@ -515,15 +480,15 @@
         }, 350);
     }
 
-    // Inicializador blindado para asegurar ejecución instantánea en Apps
+    // Ejecución forzada e inmediata sin depender de cargas externas de red
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", function() {
             inicializarContadores();
-            manejarSplash();
+            manejarSplashYEntrar();
         });
     } else {
         inicializarContadores();
-        manejarSplash();
+        manejarSplashYEntrar();
     }
 </script>
 
