@@ -63,13 +63,12 @@
             max-width: 220px;
             height: auto;
             display: block;
-            /* Se eliminó la animación compleja por CSS que congela el WebViewer antiguo */
         }
 
-        /* Animación estándar de entrada a la gorra (0.8s desvanecido y deslizamiento) */
+        /* Animación ajustada a 1.2 segundos para la entrada de la gorra */
         .slide-fade-in {
             display: flex !important;
-            animation: slideFadeInKey 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation: slideFadeInKey 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         .slide-out-right {
@@ -382,41 +381,47 @@
     const cGalaxy = document.getElementById("count-galaxy");
     const storageKey = "scan_galaxy_v3";
 
-    // Forzado estricto de remoción de pantalla por JavaScript directo (Especial para MIT App Inventor)
+    // Quitar Splash inicial
     function manejarSplashYEntrar() {
         const splash = document.getElementById('screen-splash');
         const home = document.getElementById('screen-1');
 
-        // Forzar cambio drástico tras 2.2 segundos
         setTimeout(() => {
             if(splash && home) {
-                splash.style.setProperty('display', 'none', 'important'); // Oculta la pantalla negra por completo
+                splash.style.setProperty('display', 'none', 'important');
                 splash.classList.remove('active');
-                
-                home.classList.add('active'); // Activa la de inicio de inmediato
+                home.classList.add('active');
             }
         }, 2200); 
     }
 
+    // Funciones del contador blindadas con fallback seguro para WebViews de App Inventor
     function inicializarContadores() {
         try {
-            if (!localStorage.getItem(storageKey)) {
+            let valorGuardado = localStorage.getItem(storageKey);
+            if (valorGuardado === null || valorGuardado === undefined || isNaN(parseInt(valorGuardado))) {
                 localStorage.setItem(storageKey, "1");
+                cGalaxy.innerText = "1";
+            } else {
+                cGalaxy.innerText = valorGuardado;
             }
-            cGalaxy.innerText = localStorage.getItem(storageKey);
         } catch(e) {
-            // Manejo de error si las cookies/localStorage están capadas en el Webview de App Inventor
             cGalaxy.innerText = "1";
         }
     }
 
     function incrementarContador() {
         try {
-            let actual = parseInt(localStorage.getItem(storageKey)) || 1;
+            let actual = parseInt(localStorage.getItem(storageKey));
+            if (isNaN(actual)) actual = 1;
             let nuevo = actual + 1;
-            localStorage.setItem(storageKey, nuevo);
-            cGalaxy.innerText = nuevo;
-        } catch(e) {}
+            localStorage.setItem(storageKey, nuevo.toString());
+            cGalaxy.innerText = nuevo.toString();
+        } catch(e) {
+            // Fallback dinámico si el WebView tiene el almacenamiento deshabilitado temporalmente
+            let actualFall = parseInt(cGalaxy.innerText) || 1;
+            cGalaxy.innerText = (actualFall + 1).toString();
+        }
     }
 
     function abrirNFC() {
@@ -473,7 +478,7 @@
         }, 350);
     }
 
-    // Ejecución forzada en App Inventor saltándose eventos de ventana tradicionales
+    // Inicialización directa
     inicializarContadores();
     manejarSplashYEntrar();
 </script>
