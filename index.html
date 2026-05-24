@@ -22,21 +22,20 @@
             color: #000;
         }
 
-        /* Contenedor principal */
         #main-wrapper {
             position: relative;
             width: 100vw;
             height: 100dvh;
         }
 
-        /* Estructura base de TODAS las pantallas (incluyendo el Splash) */
+        /* Estructura base de pantallas optimizada para App Inventor */
         .container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100dvh;
-            display: none; /* Ocultas por defecto */
+            display: none; 
             flex-direction: column;
             align-items: center;
             justify-content: space-between; 
@@ -45,45 +44,34 @@
             background: #ffffff;
         }
 
-        /* Mostrar pantalla activa (Mismo sistema para todo) */
+        /* Forzado de bloque de pantalla */
         .container.active {
-            display: flex;
+            display: flex !important;
         }
 
         /* ========================================================
-           PANTALLA NEGRA (SPLASH) COMO UNA PANTALLA MÁS
+           PANTALLA NEGRA (SPLASH) - MÁXIMA COMPATIBILIDAD
            ======================================================== */
         #screen-splash {
-            background: #000000;
-            justify-content: center; /* Centra el logo perfectamente */
+            background: #000000 !important;
+            justify-content: center; 
             z-index: 9999;
-            opacity: 1;
-            transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .splash-logo {
             width: 55vw;
             max-width: 220px;
             height: auto;
-            opacity: 0;
-            /* Animación de palpitación única */
-            animation: splashAnim 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.2s;
+            display: block;
+            /* Se eliminó la animación compleja por CSS que congela el WebViewer antiguo */
         }
 
-        @keyframes splashAnim {
-            0% { opacity: 0; transform: scale(0.85); }
-            35% { opacity: 1; transform: scale(1.08); }
-            65% { transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Animación: Desplazamiento izquierdo + Desvanecido (0.8s) al entrar a la gorra */
+        /* Animación estándar de entrada a la gorra (0.8s desvanecido y deslizamiento) */
         .slide-fade-in {
             display: flex !important;
             animation: slideFadeInKey 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        /* Animación de retorno hacia la derecha */
         .slide-out-right {
             display: flex !important;
             animation: slideOutRightKey 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -394,36 +382,41 @@
     const cGalaxy = document.getElementById("count-galaxy");
     const storageKey = "scan_galaxy_v3";
 
-    // Transición nativa idéntica al cambio de página para quitar la pantalla negra
+    // Forzado estricto de remoción de pantalla por JavaScript directo (Especial para MIT App Inventor)
     function manejarSplashYEntrar() {
         const splash = document.getElementById('screen-splash');
         const home = document.getElementById('screen-1');
 
+        // Forzar cambio drástico tras 2.2 segundos
         setTimeout(() => {
-            // Desvanecemos la pantalla negra simulando salida
-            splash.style.opacity = '0';
-            
-            // Activamos la pantalla de inicio al mismo tiempo
-            home.classList.add('active');
-
-            setTimeout(() => {
-                splash.classList.remove('active'); // La apaga por completo usando display: none
-            }, 600);
-        }, 2500); // 2.5 segundos totales de animación de logo
+            if(splash && home) {
+                splash.style.setProperty('display', 'none', 'important'); // Oculta la pantalla negra por completo
+                splash.classList.remove('active');
+                
+                home.classList.add('active'); // Activa la de inicio de inmediato
+            }
+        }, 2200); 
     }
 
     function inicializarContadores() {
-        if (!localStorage.getItem(storageKey)) {
-            localStorage.setItem(storageKey, "1");
+        try {
+            if (!localStorage.getItem(storageKey)) {
+                localStorage.setItem(storageKey, "1");
+            }
+            cGalaxy.innerText = localStorage.getItem(storageKey);
+        } catch(e) {
+            // Manejo de error si las cookies/localStorage están capadas en el Webview de App Inventor
+            cGalaxy.innerText = "1";
         }
-        cGalaxy.innerText = localStorage.getItem(storageKey);
     }
 
     function incrementarContador() {
-        let actual = parseInt(localStorage.getItem(storageKey)) || 1;
-        let nuevo = actual + 1;
-        localStorage.setItem(storageKey, nuevo);
-        cGalaxy.innerText = nuevo;
+        try {
+            let actual = parseInt(localStorage.getItem(storageKey)) || 1;
+            let nuevo = actual + 1;
+            localStorage.setItem(storageKey, nuevo);
+            cGalaxy.innerText = nuevo;
+        } catch(e) {}
     }
 
     function abrirNFC() {
@@ -480,16 +473,9 @@
         }, 350);
     }
 
-    // Ejecución forzada e inmediata sin depender de cargas externas de red
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function() {
-            inicializarContadores();
-            manejarSplashYEntrar();
-        });
-    } else {
-        inicializarContadores();
-        manejarSplashYEntrar();
-    }
+    // Ejecución forzada en App Inventor saltándose eventos de ventana tradicionales
+    inicializarContadores();
+    manejarSplashYEntrar();
 </script>
 
 </body>
